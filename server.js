@@ -1,7 +1,10 @@
 const express = require("express");
 const fetch = require("node-fetch");
+const ffmpegStatic = require("ffmpeg-static");
 const ffmpeg = require("fluent-ffmpeg");
 const { Readable, PassThrough } = require("stream");
+
+ffmpeg.setFfmpegPath(ffmpegStatic);
 
 const app = express();
 app.use(express.json());
