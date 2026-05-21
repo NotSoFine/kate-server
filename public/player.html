@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Kate Audio Player</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0f0f0f;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 20px;
+    padding: 20px;
+  }
+  .card {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    max-width: 480px;
+  }
+  .title {
+    font-size: 13px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .status {
+    font-size: 15px;
+    color: #aaa;
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #444;
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .dot.green { background: #4caf50; }
+  .dot.blue { background: #2196f3; animation: pulse 1s infinite; }
+  .dot.red { background: #f44336; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+  .status-text { color: #aaa; }
+  .status-text.green { color: #4caf50; }
+  .status-text.blue { color: #2196f3; }
+  .status-text.red { color: #f44336; }
+  .text-display {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #e0e0e0;
+    min-height: 60px;
+    margin-top: 8px;
+  }
+  .session-input {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  input[type="text"] {
+    flex: 1;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #e0e0e0;
+    font-size: 14px;
+    outline: none;
+  }
+  input[type="text"]:focus { border-color: #555; }
+  button {
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: #e0e0e0;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover { background: #333; }
+  button.active { background: #1b3a2a; border-color: #2e6b47; color: #4caf50; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="title">Status</div>
+  <div class="session-input">
+    <button id="startBtn" onclick="toggleListen()" style="width:100%">Start Listening</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="title">Kate says</div>
+  <div class="text-display" id="textDisplay">—</div>
+</div>
+
+<audio id="audioPlayer" style="display:none"></audio>
+
+<script>
+  let polling = false;
+  let pollInterval = null;
+  let sessionId = "";
+  const proxyBase = window.location.origin;
+
+  function setStatus(msg, type) {
+    const statusText = document.getElementById("statusText");
+    const dot = document.getElementById("dot");
+    statusText.className = "status-text " + (type || "");
+    dot.className = "dot " + (type || "");
+    statusText.textContent = msg;
+  }
+
+function toggleListen() {
+    const btn = document.getElementById("startBtn");
+    if (polling) {
+        clearInterval(pollInterval);
+        polling = false;
+        btn.textContent = "Start Listening";
+        setStatus("Stopped.", "");
+    } else {
+        polling = true;
+        btn.textContent = "Stop";
+        setStatus("Listening for Kate...", "green");
+        pollInterval = setInterval(poll, 1000);
+    }
+}
+
+  async function poll() {
+    try {
+      const res = await fetch(`${proxyBase}/session?id=latest`);
+      const data = await res.json();
+      if (data.ready) {
+        document.getElementById("textDisplay").textContent = data.text || "—";
+        playAudio(data.audioUrl);
+        await fetch(`${proxyBase}/session/played`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: "latest" })
+        });
+      }
+    } catch (err) {
+      setStatus("Connection error — retrying...", "red");
+    }
+  }
+
+  function playAudio(audioUrl) {
+    setStatus("Kate is speaking...", "blue");
+    const audio = document.getElementById("audioPlayer");
+    audio.src = proxyBase + audioUrl;
+    audio.play().catch(e => {
+      console.error("Audio play failed:", e);
+      setStatus("Audio blocked — click Start again to unlock.", "red");
+    });
+    audio.onended = () => setStatus("Listening for Kate...", "green");
+  }
+</script>
+</body>
+</html>
