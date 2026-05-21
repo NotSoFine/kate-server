@@ -65,31 +65,17 @@
     min-height: 60px;
     margin-top: 8px;
   }
-  .session-input {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-  }
-  input[type="text"] {
-    flex: 1;
-    background: #111;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 8px 12px;
-    color: #e0e0e0;
-    font-size: 14px;
-    outline: none;
-  }
-  input[type="text"]:focus { border-color: #555; }
   button {
+    width: 100%;
     background: #2a2a2a;
     border: 1px solid #3a3a3a;
     border-radius: 8px;
-    padding: 8px 16px;
+    padding: 10px 16px;
     color: #e0e0e0;
     font-size: 14px;
     cursor: pointer;
     transition: background 0.2s;
+    margin-top: 8px;
   }
   button:hover { background: #333; }
   button.active { background: #1b3a2a; border-color: #2e6b47; color: #4caf50; }
@@ -98,9 +84,15 @@
 <body>
 
 <div class="card">
+  <div class="title">Kate Audio Player</div>
+  <button id="startBtn" onclick="toggleListen()">Start Listening</button>
+</div>
+
+<div class="card">
   <div class="title">Status</div>
-  <div class="session-input">
-    <button id="startBtn" onclick="toggleListen()" style="width:100%">Start Listening</button>
+  <div class="status">
+    <div class="dot" id="dot"></div>
+    <span class="status-text" id="statusText">Click Start Listening to begin.</span>
   </div>
 </div>
 
@@ -114,8 +106,7 @@
 <script>
   let polling = false;
   let pollInterval = null;
-  let sessionId = "";
-  const proxyBase = window.location.origin;
+  const proxyBase = "https://kate-server-production.up.railway.app";
 
   function setStatus(msg, type) {
     const statusText = document.getElementById("statusText");
@@ -125,20 +116,22 @@
     statusText.textContent = msg;
   }
 
-function toggleListen() {
+  function toggleListen() {
     const btn = document.getElementById("startBtn");
     if (polling) {
-        clearInterval(pollInterval);
-        polling = false;
-        btn.textContent = "Start Listening";
-        setStatus("Stopped.", "");
+      clearInterval(pollInterval);
+      polling = false;
+      btn.textContent = "Start Listening";
+      btn.classList.remove("active");
+      setStatus("Stopped.", "");
     } else {
-        polling = true;
-        btn.textContent = "Stop";
-        setStatus("Listening for Kate...", "green");
-        pollInterval = setInterval(poll, 1000);
+      polling = true;
+      btn.textContent = "Stop";
+      btn.classList.add("active");
+      setStatus("Listening for Kate...", "green");
+      pollInterval = setInterval(poll, 1000);
     }
-}
+  }
 
   async function poll() {
     try {
@@ -164,7 +157,7 @@ function toggleListen() {
     audio.src = proxyBase + audioUrl;
     audio.play().catch(e => {
       console.error("Audio play failed:", e);
-      setStatus("Audio blocked — click Start again to unlock.", "red");
+      setStatus("Audio blocked — click Stop then Start again to unlock.", "red");
     });
     audio.onended = () => setStatus("Listening for Kate...", "green");
   }
