@@ -116,22 +116,28 @@
     statusText.textContent = msg;
   }
 
-  function toggleListen() {
+function toggleListen() {
     const btn = document.getElementById("startBtn");
     if (polling) {
-      clearInterval(pollInterval);
-      polling = false;
-      btn.textContent = "Start Listening";
-      btn.classList.remove("active");
-      setStatus("Stopped.", "");
+        clearInterval(pollInterval);
+        polling = false;
+        btn.textContent = "Start Listening";
+        btn.classList.remove("active");
+        setStatus("Stopped.", "");
     } else {
-      polling = true;
-      btn.textContent = "Stop";
-      btn.classList.add("active");
-      setStatus("Listening for Kate...", "green");
-      pollInterval = setInterval(poll, 1000);
+        // Play a silent sound immediately on click to permanently unlock autoplay
+        const audio = document.getElementById("audioPlayer");
+        audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAA" +
+            "EAAQAAgD4AAIA+AAABAAgAZGF0YQAAAAA=";
+        audio.play().catch(() => {});
+
+        polling = true;
+        btn.textContent = "Stop";
+        btn.classList.add("active");
+        setStatus("Listening for Kate...", "green");
+        pollInterval = setInterval(poll, 1000);
     }
-  }
+}
 
   async function poll() {
     try {

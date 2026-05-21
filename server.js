@@ -36,7 +36,7 @@ setInterval(() => {
 
 // Helper — converts text to Base64 PCM via Google Translate TTS
 async function textToPCMBase64(text) {
-    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=ja&client=tw-ob`;
+    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=ja&client=tw-ob&speed=1.3`;
     const ttsRes = await fetch(ttsUrl, {
         headers: { "User-Agent": "Mozilla/5.0" }
     });
